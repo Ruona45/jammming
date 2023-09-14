@@ -43,7 +43,7 @@ function initateLogin() {
 }
 
 // Function to exchange the authorization code for an access token
-async function exchangeCodeForToken(code) {
+function exchangeCodeForToken(code) {
   // Needed for the POST request
   const headers = {
     "Content-type": "application/x-www-form-urlencoded",
@@ -59,21 +59,9 @@ async function exchangeCodeForToken(code) {
     code_verifier: codeVerifier,
   });
 
-  const response = await fetch(tokenEndpoint, {
+  return fetch(tokenEndpoint, {
     method: "POST",
     headers: headers,
     body: body.toString(),
-  })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error("HTTP status " + response.status);
-      }
-      return response.json();
-    })
-    .then((data) => {
-      localStorage.setItem("access_token", data.access_token);
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-    });
+  }).then((response) => response.json());
 }
