@@ -105,3 +105,46 @@ async function search(query) {
     console.log(error);
   }
 }
+
+// Function to create and save tracks to playlist
+async function savePlaylist(playlistName, trackUris) {
+  // First create the playlist using the playlistName
+  // Get the user_id from the current users profile.
+  let userId;
+  let playlistId;
+  const accessToken = localStorage.getItem("access_token");
+  const headers = { Authorization: `Bearer ${accessToken}` };
+  const userDetailsEndpoint = "https://api.spotify.com/v1/me";
+
+  // Get the userId
+  try {
+    const userResponse = await fetch(userDetailsEndpoint, { header: headers });
+    if (userResponse.ok) {
+      const jsonUserResponse = await userResponse.json();
+      userId = jsonUserResponse.id;
+    }
+  } catch (error) {
+    console.log(error);
+  }
+
+  // Create playlist and add tracks to playlist
+  return fetch(`https://api.spotify.com/v1//users/${userId}/playlists`, {
+    method: "POST",
+    headers: headers,
+    body: JSON.stringify({ name: playlistName }),
+  })
+    .then((response) => response.json())
+    .then((jsonResponse) => {
+      playlistId = jsonResponse.id;
+      return fetch(
+        `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+        {
+          headers: headers,
+          method: "POST",
+          body: JSON.stringify({ uris: trackUris }),
+        }
+      );
+    });
+}
+
+export { search, initateLogin, exchangeCodeForToken, savePlaylist };
