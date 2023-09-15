@@ -108,6 +108,9 @@ async function search(query) {
 
 // Function to create and save tracks to playlist
 async function savePlaylist(playlistName, trackUris) {
+  if (!playlistName || trackUris.length) {
+    return;
+  }
   // First create the playlist using the playlistName
   // Get the user_id from the current users profile.
   let userId;
