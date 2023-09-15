@@ -5,6 +5,7 @@ const clientID = "1b2e4d0711db4faab9a6b637df41d1b5";
 const redirectURI = "http://localhost:3000/";
 const authorizationEndpoint = "https://accounts.spotify.com/authorize";
 const tokenEndpoint = "https://accounts.spotify.com/api/token";
+const spotifyBaseUrl = "https://api.spotify.com/v1";
 
 // Function to generate a random string
 function generateRandomString(length) {
@@ -38,7 +39,7 @@ function initateLogin() {
   });
 
   // Responsible for creating the URL for the Spotify login and authorization page and the redirecting the user to that URL
-  const loginURL = `${authorizationEndpoint}?${params.toString()}`;
+  const loginURL = `${authorizationEndpoint}?${params}`;
   window.location.href = loginURL;
 }
 
@@ -59,9 +60,48 @@ function exchangeCodeForToken(code) {
     code_verifier: codeVerifier,
   });
 
-  return fetch(tokenEndpoint, {
+  const response = fetch(tokenEndpoint, {
     method: "POST",
     headers: headers,
-    body: body.toString(),
-  }).then((response) => response.json());
+    body: body,
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("HTTP status " + response.status);
+      }
+      return response.json();
+    })
+    .then((data) => {
+      localStorage.setItem("access_token", data.access_token);
+    })
+    .catch((error) => {
+      console.log("Error:", error);
+    });
+}
+
+/// Function to search for tracks
+async function search(query) {
+  const searchEndpoint = `/search?${query}&type=track`;
+  const urlToFetch = `${spotifyBaseUrl}${searchEndpoint}`;
+  const accessToken = localStorage.getItem("access_token");
+  try {
+    const response = await fetch(urlToFetch, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (response.ok) {
+      const jsonResponse = await response.json();
+      if (!jsonResponse.tracks) {
+        return [];
+      }
+      return jsonResponse.tracks.items.map((track) => ({
+        id: track.id,
+        name: track.name,
+        artist: track.artists[0].name,
+        album: track.album.name,
+        uri: track.url,
+      }));
+    }
+  } catch (error) {
+    console.log(error);
+  }
 }
